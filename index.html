@@ -20,12 +20,30 @@
     .status {
       margin-top: 20px;
     }
+	#delete-all-btn {
+		display: none;
+	}
   </style>
 </head>
 <body>
   <h1>AG AMD Queue System</h1>
   <button id="clickBtn">Add me</button>
   <div class="status" id="status"></div>
+ 
+    <h1>Queue</h1>
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be inserted here -->
+        </tbody>
+    </table>
+	
+<button id="delete-all-btn">Delete</button>
  
   <script type="module">
 	import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
@@ -52,16 +70,62 @@
       } else {
         status.textContent = 'Added successfully!';
       }
-	  
-	  setTimeout(function() {
-	  status.textContent = '';
-	}, 5000);
     });
 	
 	window.onload = function() {
 	  // Show a prompt asking for the user's name
 	  userInfo = prompt("Input your name:");
+	  
+	  if(userInfo == 'Tudor')
+		document.getElementById('delete-all-btn').style.display = "inline-block";
+	  
+	  fetchData();
 	};
+	
+	async function fetchData() {
+    const { data, error } = await supabase
+        .from('Inputs') // Replace with your table name
+        .select('*'); // Select all columns
+
+    if (error) {
+        console.error('Error fetching data:', error);
+        return;
+    }
+
+    // Get the table body element to insert data
+    const tableBody = document.querySelector('#data-table tbody');
+	tableBody.innerHTML = '';
+	
+    // Loop through the data and create table rows
+    data.forEach(row => {
+        const tr = document.createElement('tr');
+        
+        const tdRequestedAt = document.createElement('td');
+        tdRequestedAt.textContent = new Date(row.requested_at).toLocaleString(); // Format timestamp
+        tr.appendChild(tdRequestedAt);
+
+        const tdUserInfo = document.createElement('td');
+        tdUserInfo.textContent = row.user_info; // User info as a string
+        tr.appendChild(tdUserInfo);
+
+        tableBody.appendChild(tr);
+    });
+	
+	setTimeout(fetchData, 1000);
+}
+async function deleteAllData() {
+  const { error } = await supabase
+    .from('Inputs') // Replace with your table name
+    .delete()
+    .not('id', 'is', null); // This deletes all rows where 'id' is not null (i.e., all rows)
+
+  if (error) {
+    console.error('Error deleting data:', error);
+    return;
+  }
+}
+
+document.getElementById('delete-all-btn').addEventListener('click', deleteAllData);
   </script>
 </body>
 </html>
